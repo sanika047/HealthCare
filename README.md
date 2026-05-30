@@ -335,33 +335,6 @@ The application supports:
 * Rule-Based Prediction
 * Dashboard Statistics
 
----
-
-# 📸 Screenshots
-
-## Dashboard
-
-Replace with your screenshot:
-
-```html
-<img src="screenshots/dashboard.png" width="100%">
-```
-
----
-
-## Patient Management
-
-```html
-<img src="screenshots/patients.png" width="100%">
-```
-
----
-
-## AI Prediction Result
-
-```html
-<img src="screenshots/prediction.png" width="100%">
-```
 
 ---
 
@@ -419,7 +392,7 @@ GitHub:
 https://github.com/sanika047
 
 LinkedIn:
-(Add Your LinkedIn Profile)
+([Add Your LinkedIn Profile](https://www.linkedin.com/in/sanika-gurav-9b9379282])
 
 ---
 
