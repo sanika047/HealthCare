@@ -392,7 +392,7 @@ GitHub:
 https://github.com/sanika047
 
 LinkedIn:
-([Sanika Gurav](https://www.linkedin.com/in/sanika-gurav-9b9379282]))
+[Sanika Gurav](https://www.linkedin.com/in/sanika-gurav-9b9379282])
 
 ---
 
