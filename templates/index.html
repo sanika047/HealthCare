@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HealthAI — Predictive Health Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+
+<div id="particles-js"></div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner-ring"></div>
+  <div class="loading-text" id="loadingText">Processing...</div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<div class="app-wrapper">
+
+  <!-- ===== NAVBAR ===== -->
+  <nav class="navbar-custom">
+    <div style="display:flex;align-items:center;justify-content:space-between;max-width:1400px;margin:0 auto;width:100%">
+      <a class="navbar-brand-custom" href="#">
+        <div class="brand-icon"><i class="fas fa-heartbeat"></i></div>
+        <div>
+          <span class="brand-text">HealthAI</span>
+          <span class="brand-sub">Predictive Health Platform</span>
+        </div>
+      </a>
+      <div class="nav-status">
+        <div class="status-dot"></div>
+        <span style="color:#16a34a;font-weight:500">AI Engine Online</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===== HERO ===== -->
+  <section class="hero-section">
+    <div style="max-width:1400px;margin:0 auto">
+      <h1 class="hero-title">Patient <span>Health Intelligence</span></h1>
+      <p class="hero-subtitle">AI-powered blood test analysis &amp; predictive health risk assessment</p>
+    </div>
+  </section>
+
+  <!-- ===== STATS ===== -->
+  <section class="stats-section">
+    <div style="max-width:1400px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem">
+
+      <div class="stat-card" style="--card-accent:linear-gradient(90deg,#6366f1,#8b5cf6)">
+        <div class="stat-icon" style="background:#eef2ff;color:#6366f1">
+          <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-value" style="color:#4f46e5" id="statTotal">0</div>
+        <div class="stat-label">Total Patients</div>
+      </div>
+
+      <div class="stat-card" style="--card-accent:linear-gradient(90deg,#16a34a,#0d9488)">
+        <div class="stat-icon" style="background:#f0fdf4;color:#16a34a">
+          <i class="fas fa-tint"></i>
+        </div>
+        <div class="stat-value" style="color:#15803d" id="statGlucose">—</div>
+        <div class="stat-label">Avg Glucose <span class="stat-unit">mg/dL</span></div>
+      </div>
+
+      <div class="stat-card" style="--card-accent:linear-gradient(90deg,#0ea5e9,#6366f1)">
+        <div class="stat-icon" style="background:#f0f9ff;color:#0ea5e9">
+          <i class="fas fa-vial"></i>
+        </div>
+        <div class="stat-value" style="color:#0284c7" id="statHaemoglobin">—</div>
+        <div class="stat-label">Avg Haemoglobin <span class="stat-unit">g/dL</span></div>
+      </div>
+
+      <div class="stat-card" style="--card-accent:linear-gradient(90deg,#d97706,#dc2626)">
+        <div class="stat-icon" style="background:#fffbeb;color:#d97706">
+          <i class="fas fa-heart"></i>
+        </div>
+        <div class="stat-value" style="color:#b45309" id="statCholesterol">—</div>
+        <div class="stat-label">Avg Cholesterol <span class="stat-unit">mg/dL</span></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===== MAIN TABLE CARD ===== -->
+  <section class="content-section">
+    <div style="max-width:1400px;margin:0 auto">
+      <div class="glass-card">
+
+        <div class="card-header-custom">
+          <div class="card-title-custom">
+            <i class="fas fa-table-cells"></i>
+            Patient Records
+            <span class="ai-badge"><i class="fas fa-robot"></i> AI Analysed</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:0.85rem;flex-wrap:wrap">
+            <div class="search-wrapper">
+              <i class="fas fa-search"></i>
+              <input type="text" class="search-input" id="searchInput" placeholder="Search patients..." />
+            </div>
+            <button class="btn-glow" id="addPatientBtn">
+              <i class="fas fa-plus"></i> Add Patient
+            </button>
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="patients-table">
+            <thead>
+              <tr>
+                <th>Patient</th>
+                <th>Date of Birth</th>
+                <th>Glucose</th>
+                <th>Haemoglobin</th>
+                <th>Cholesterol</th>
+                <th>AI Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="patientTableBody"></tbody>
+          </table>
+
+          <div class="empty-state" id="emptyState" style="display:none">
+            <div class="empty-icon"><i class="fas fa-user-doctor"></i></div>
+            <div class="empty-title">No Patient Records Yet</div>
+            <div class="empty-text">Add your first patient to begin AI-powered health analysis.</div>
+            <button class="btn-glow" onclick="openAddModal()">
+              <i class="fas fa-plus"></i> Add First Patient
+            </button>
+          </div>
+        </div>
+
+        <div class="table-footer" id="tableFooter" style="display:none">
+          <span id="recordCount"></span>
+          <span>
+            <i class="fas fa-robot" style="color:#6366f1;margin-right:4px"></i>
+            Powered by Groq LLaMA AI
+          </span>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+</div><!-- end app-wrapper -->
+
+<!-- ===== ADD / EDIT MODAL ===== -->
+<div class="modal-overlay" id="formModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle"><i class="fas fa-user-plus"></i> Add New Patient</div>
+      <button class="modal-close" onclick="closeFormModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+
+      <div class="form-error-box" id="formErrorBox" style="display:none">
+        <div class="form-error-title">
+          <i class="fas fa-exclamation-circle"></i> Please fix the following errors:
+        </div>
+        <ul id="formErrors"></ul>
+      </div>
+
+      <form id="patientForm" novalidate>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="fieldName">Full Name <span class="required">*</span></label>
+            <div class="input-with-icon">
+              <input type="text" class="form-control-custom" id="fieldName" placeholder="e.g. John Smith" required />
+              <i class="fas fa-user"></i>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="fieldDob">Date of Birth <span class="required">*</span></label>
+            <div class="input-with-icon">
+              <input type="date" class="form-control-custom" id="fieldDob" required />
+              <i class="fas fa-calendar"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="fieldEmail">Email Address <span class="required">*</span></label>
+          <div class="input-with-icon">
+            <input type="email" class="form-control-custom" id="fieldEmail" placeholder="e.g. john@example.com" required />
+            <i class="fas fa-envelope"></i>
+          </div>
+        </div>
+
+        <div class="blood-section-box">
+          <div class="blood-section-label">
+            <i class="fas fa-flask"></i> Blood Test Results
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label" for="fieldGlucose">
+                Glucose <span class="required">*</span>
+                <span style="color:#94a3b8;font-size:0.65rem;margin-left:3px;text-transform:none;letter-spacing:0;font-weight:400">(mg/dL)</span>
+              </label>
+              <div class="input-with-icon">
+                <input type="number" step="0.1" min="0" class="form-control-custom" id="fieldGlucose" placeholder="e.g. 95" required />
+                <i class="fas fa-tint"></i>
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label" for="fieldHaemoglobin">
+                Haemoglobin <span class="required">*</span>
+                <span style="color:#94a3b8;font-size:0.65rem;margin-left:3px;text-transform:none;letter-spacing:0;font-weight:400">(g/dL)</span>
+              </label>
+              <div class="input-with-icon">
+                <input type="number" step="0.1" min="0" class="form-control-custom" id="fieldHaemoglobin" placeholder="e.g. 14.5" required />
+                <i class="fas fa-vial"></i>
+              </div>
+            </div>
+          </div>
+          <div class="form-group" style="margin-top:1rem;margin-bottom:0">
+            <label class="form-label" for="fieldCholesterol">
+              Cholesterol <span class="required">*</span>
+              <span style="color:#94a3b8;font-size:0.65rem;margin-left:3px;text-transform:none;letter-spacing:0;font-weight:400">(mg/dL)</span>
+            </label>
+            <div class="input-with-icon">
+              <input type="number" step="0.1" min="0" class="form-control-custom" id="fieldCholesterol" placeholder="e.g. 180" required />
+              <i class="fas fa-heart"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="ai-info-box">
+          <i class="fas fa-robot"></i>
+          <span>The <strong style="color:#6366f1;font-weight:600">Remarks</strong> field is automatically generated by the AI health engine based on the blood test values you provide.</span>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline-glow" onclick="closeFormModal()"><i class="fas fa-times"></i> Cancel</button>
+      <button class="btn-glow" onclick="$('patientForm').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}))">
+        <i class="fas fa-robot"></i> Save &amp; Analyse
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== VIEW MODAL ===== -->
+<div class="modal-overlay" id="viewModal">
+  <div class="modal-box" style="max-width:600px">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fas fa-stethoscope"></i> Patient Health Report</div>
+      <button class="modal-close" onclick="closeViewModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+
+      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.2rem;padding:1rem;background:#f7f9fc;border-radius:10px;border:1px solid #e3e8ef">
+        <div style="width:46px;height:46px;background:#eef2ff;border:1px solid #c7d2fe;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;color:#6366f1;flex-shrink:0">
+          <i class="fas fa-user"></i>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:1rem;font-weight:700;color:#0f172a" id="viewName">—</div>
+          <div style="font-size:0.8rem;color:#94a3b8;margin-top:2px" id="viewEmail">—</div>
+        </div>
+        <div id="viewStatus"></div>
+      </div>
+
+      <div class="detail-grid">
+        <div class="detail-item">
+          <div class="detail-label"><i class="fas fa-calendar" style="margin-right:4px"></i>Date of Birth</div>
+          <div class="detail-value" id="viewDob">—</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label"><i class="fas fa-birthday-cake" style="margin-right:4px"></i>Age</div>
+          <div class="detail-value" id="viewAge">—</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label"><i class="fas fa-tint" style="margin-right:4px;color:#16a34a"></i>Glucose</div>
+          <div class="detail-value" id="viewGlucose">—</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label"><i class="fas fa-vial" style="margin-right:4px;color:#0ea5e9"></i>Haemoglobin</div>
+          <div class="detail-value" id="viewHaemoglobin">—</div>
+        </div>
+        <div class="detail-item" style="grid-column:1/-1">
+          <div class="detail-label"><i class="fas fa-heart" style="margin-right:4px;color:#d97706"></i>Cholesterol</div>
+          <div class="detail-value" id="viewCholesterol">—</div>
+        </div>
+      </div>
+
+      <div class="remarks-box">
+        <div class="remarks-label"><i class="fas fa-robot"></i> AI Health Analysis</div>
+        <div class="remarks-text" id="viewRemarks">—</div>
+      </div>
+
+      <div style="margin-top:0.9rem;font-size:0.72rem;color:#94a3b8;text-align:right">
+        <i class="fas fa-clock" style="margin-right:4px"></i>
+        Record created: <span id="viewCreated">—</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline-glow" onclick="closeViewModal()"><i class="fas fa-times"></i> Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DELETE CONFIRM MODAL ===== -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal-box delete-modal-box">
+    <div class="modal-body" style="padding:2.25rem 1.75rem;text-align:center">
+      <div class="delete-icon"><i class="fas fa-trash-alt"></i></div>
+      <div class="delete-title">Delete Patient Record?</div>
+      <p class="delete-text" style="margin-top:0.65rem">
+        You are about to permanently delete the record for<br>
+        <span class="delete-name" id="deletePatientName"></span>.<br>
+        <span style="color:#94a3b8;font-size:0.78rem">This action cannot be undone.</span>
+      </p>
+    </div>
+    <div class="modal-footer" style="justify-content:center">
+      <button class="btn-outline-glow" onclick="closeDeleteModal()"><i class="fas fa-times"></i> Cancel</button>
+      <button class="btn-danger-glow" style="padding:0.52rem 1.2rem;font-size:0.83rem;font-weight:600" onclick="deletePatient()">
+        <i class="fas fa-trash"></i> Yes, Delete
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SCRIPTS ===== -->
+<script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+<script>
+  // particles hidden on light theme via CSS, but init anyway for future toggle
+  if (document.getElementById('particles-js').style.display !== 'none') {
+    particlesJS('particles-js', {
+      particles: { number: { value: 30 }, color: { value: '#6366f1' },
+        opacity: { value: 0.08 }, size: { value: 2 },
+        line_linked: { enable: true, color: '#6366f1', opacity: 0.05 },
+        move: { enable: true, speed: 0.4 }
+      },
+      interactivity: { events: { onhover: { enable: false } } }
+    });
+  }
+</script>
+</body>
+</html>
