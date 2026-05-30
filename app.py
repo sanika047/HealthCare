@@ -15,10 +15,16 @@ CORS(app)
 database_url = os.getenv('DATABASE_URL', '')
 
 if not database_url:
-    # Local SQLite — store inside instance/ folder that Flask manages
-    basedir = os.path.abspath(os.path.dirname(__file__))
-    database_url = 'sqlite:///' + os.path.join(basedir, 'instance', 'health.db')
-    os.makedirs(os.path.join(basedir, 'instance'), exist_ok=True)
+    # On Render the app directory is read-only; /tmp is always writable.
+    # Locally we use the instance/ folder next to app.py.
+    if os.getenv('RENDER'):
+        db_path = '/tmp/health.db'
+    else:
+        basedir = os.path.abspath(os.path.dirname(__file__))
+        db_dir  = os.path.join(basedir, 'instance')
+        os.makedirs(db_dir, exist_ok=True)
+        db_path = os.path.join(db_dir, 'health.db')
+    database_url = 'sqlite:///' + db_path
 
 # Render free tier still returns the legacy postgres:// scheme
 if database_url.startswith('postgres://'):
