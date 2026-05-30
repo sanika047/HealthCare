@@ -11,17 +11,17 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-# ── Database ──────────────────────────────────────────────────────────────────
+# ── Database config ───────────────────────────────────────────────────────────
 database_url = os.getenv('DATABASE_URL', '')
 
 if not database_url:
-    # Local development — SQLite in instance/ folder
+    # Local dev: SQLite next to app.py
     basedir = os.path.abspath(os.path.dirname(__file__))
     db_dir  = os.path.join(basedir, 'instance')
     os.makedirs(db_dir, exist_ok=True)
     database_url = 'sqlite:///' + os.path.join(db_dir, 'health.db')
 
-# Render free tier returns legacy postgres:// — SQLAlchemy needs postgresql://
+# Render legacy scheme fix
 if database_url.startswith('postgres://'):
     database_url = database_url.replace('postgres://', 'postgresql://', 1)
 
@@ -31,19 +31,21 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 
-# ── Models ────────────────────────────────────────────────────────────────────
+# ── Models  (MUST be before db.create_all) ───────────────────────────────────
 class Patient(db.Model):
-    id           = db.Column(db.Integer, primary_key=True)
-    full_name    = db.Column(db.String(100), nullable=False)
-    date_of_birth= db.Column(db.Date, nullable=False)
-    email        = db.Column(db.String(120), unique=True, nullable=False)
-    glucose      = db.Column(db.Float, nullable=False)
-    haemoglobin  = db.Column(db.Float, nullable=False)
-    cholesterol  = db.Column(db.Float, nullable=False)
-    remarks      = db.Column(db.Text, default='')
-    created_at   = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at   = db.Column(db.DateTime, default=datetime.utcnow,
-                             onupdate=datetime.utcnow)
+    __tablename__ = 'patient'
+
+    id            = db.Column(db.Integer, primary_key=True)
+    full_name     = db.Column(db.String(100), nullable=False)
+    date_of_birth = db.Column(db.Date,        nullable=False)
+    email         = db.Column(db.String(120), unique=True, nullable=False)
+    glucose       = db.Column(db.Float,       nullable=False)
+    haemoglobin   = db.Column(db.Float,       nullable=False)
+    cholesterol   = db.Column(db.Float,       nullable=False)
+    remarks       = db.Column(db.Text,        default='')
+    created_at    = db.Column(db.DateTime,    default=datetime.utcnow)
+    updated_at    = db.Column(db.DateTime,    default=datetime.utcnow,
+                              onupdate=datetime.utcnow)
 
     def to_dict(self):
         return {
@@ -57,6 +59,11 @@ class Patient(db.Model):
             'remarks':       self.remarks,
             'created_at':    self.created_at.isoformat(),
         }
+
+
+# ── Create tables (now safe — model is defined above) ────────────────────────
+with app.app_context():
+    db.create_all()
 
 
 # ── AI prediction ─────────────────────────────────────────────────────────────
@@ -193,12 +200,12 @@ def create_patient():
     age = (date.today() - dob).days // 365
 
     patient = Patient(
-        full_name    = data['full_name'].strip(),
-        date_of_birth= dob,
-        email        = data['email'].strip().lower(),
-        glucose      = float(data['glucose']),
-        haemoglobin  = float(data['haemoglobin']),
-        cholesterol  = float(data['cholesterol']),
+        full_name     = data['full_name'].strip(),
+        date_of_birth = dob,
+        email         = data['email'].strip().lower(),
+        glucose       = float(data['glucose']),
+        haemoglobin   = float(data['haemoglobin']),
+        cholesterol   = float(data['cholesterol']),
     )
     patient.remarks = get_health_prediction(
         patient.full_name, patient.glucose,
@@ -217,7 +224,7 @@ def get_patient(patient_id):
 @app.route('/api/patients/<int:patient_id>', methods=['PUT'])
 def update_patient(patient_id):
     patient = Patient.query.get_or_404(patient_id)
-    data = request.get_json(silent=True) or {}
+    data    = request.get_json(silent=True) or {}
 
     errors = validate_patient_data(data)
     if errors:
@@ -263,17 +270,13 @@ def get_stats():
     total = len(patients)
     return jsonify({
         'total':           total,
-        'avg_glucose':     round(sum(p.glucose      for p in patients) / total, 1),
-        'avg_haemoglobin': round(sum(p.haemoglobin  for p in patients) / total, 1),
-        'avg_cholesterol': round(sum(p.cholesterol  for p in patients) / total, 1),
+        'avg_glucose':     round(sum(p.glucose     for p in patients) / total, 1),
+        'avg_haemoglobin': round(sum(p.haemoglobin for p in patients) / total, 1),
+        'avg_cholesterol': round(sum(p.cholesterol for p in patients) / total, 1),
     })
 
 
-# ── Startup ───────────────────────────────────────────────────────────────────
-# This runs whether the app is started via `python app.py` or `gunicorn app:app`
-with app.app_context():
-    db.create_all()
-
+# ── Entry point ───────────────────────────────────────────────────────────────
 if __name__ == '__main__':
     port  = int(os.getenv('PORT', 5000))
     debug = os.getenv('FLASK_ENV', 'development') != 'production'
