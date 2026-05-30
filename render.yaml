@@ -1,0 +1,22 @@
+databases:
+  - name: healthai-db
+    databaseName: healthai
+    user: healthai
+    plan: free
+
+services:
+  - type: web
+    name: healthcare
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --workers 1 --threads 2 --timeout 120
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: healthai-db
+          property: connectionString
+      - key: FLASK_ENV
+        value: production
+      - key: PYTHON_VERSION
+        value: 3.11.9
